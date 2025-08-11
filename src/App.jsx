@@ -75,15 +75,19 @@ function App() {
     if (settings.includeMrWhite) roles.push('mrwhite');
     roles = shuffle(roles);
     // Assign to players
-    setPlayers(playerNames.map((name, idx) => ({
-      name,
-      role: roles[idx],
-      points: 0,
-      eliminated: false,
-      word: roles[idx] === 'civilian' ? pair.civilian : roles[idx] === 'undercover' ? pair.undercover : '',
-      clue: '',
-      votes: 0,
-    })));
+    setPlayers(playerNames.map((name, idx) => {
+      // Try to find existing player to preserve their score
+      const existing = players.find(p => p.name === name);
+      return {
+        name,
+        role: roles[idx],
+        points: existing ? existing.points : 0,
+        eliminated: false,
+        word: roles[idx] === 'civilian' ? pair.civilian : roles[idx] === 'undercover' ? pair.undercover : '',
+        clue: '',
+        votes: 0,
+      };
+    }));
     setClueOrder(shuffle(playerNames)); // NEW: randomize clue order
   }
 
@@ -300,6 +304,22 @@ function App() {
             })}
           </ul>
           <button className="fun-btn" onClick={() => {
+            // Only reset round/game state, keep players and scores
+            setScreen(SCREENS.SHOW_WORD);
+            setCurrentRevealIndex(0);
+            setCurrentClueIndex(0);
+            setCurrentVoteIndex(0);
+            setClues([]);
+            setVotes([]);
+            setRound(1);
+            setGameOver(false);
+            setWinner(null);
+            setWords({ civilian: '', undercover: '' });
+            // Assign new roles/words for the same players
+            assignRolesAndWords();
+          }}>🔄 Play Again</button>
+          <button className="fun-btn danger" style={{ marginLeft: 12 }} onClick={() => {
+            // Full reset: everything including names and scores
             setScreen(SCREENS.SETUP);
             setPlayers([]);
             setPlayerNamesText('');
@@ -315,7 +335,7 @@ function App() {
             setWinner(null);
             setWords({ civilian: '', undercover: '' });
             // Do not reset usedWordPairIndices here to keep session memory
-          }}>🔄 Play Again</button>
+          }}>🆕 New Game</button>
         </div>
       )}
     </div>
