@@ -283,10 +283,9 @@ function App() {
             <p style={{ fontSize: '1.1rem' }}>Discuss clues and select a player to eliminate:</p>
             <ul style={{ textAlign: 'left', maxWidth: 400, margin: '0 auto', fontSize: '1.2rem' }}>
               {alivePlayers.map((p, i) => {
-                const roleEmoji = p.role === 'civilian' ? '👨‍🌾' : p.role === 'undercover' ? '🕵️‍♂️' : '👻';
                 return (
                   <li key={i} style={{ marginBottom: 10 }}>
-                    <b>{p.name}</b> <span style={{ fontSize: '1.1rem' }}>{roleEmoji}</span>
+                    <b>{p.name}</b>
                     <button className="fun-btn danger" style={{ marginLeft: 16 }} onClick={() => {
                     // Eliminate this player and deduct 1 point
                     const updatedPlayers = players.map(pl =>
