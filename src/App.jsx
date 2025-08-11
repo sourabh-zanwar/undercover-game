@@ -6,11 +6,13 @@ import wordPairs from './wordPairs';
 
 const SCREENS = {
   SETUP: 'setup',
-  ROLE_REVEAL: 'role-reveal',
+  SHOW_WORD: 'show-word', // NEW
+  REVEAL_WORD: 'reveal-word', // NEW
+  CLUE_ORDER: 'clue-order', // NEW
   CLUE: 'clue',
-  VOTE: 'vote',
   RESULTS: 'results',
 };
+
 
 
 
@@ -37,6 +39,7 @@ function App() {
   const [winner, setWinner] = useState(null);
   const [words, setWords] = useState({ civilian: '', undercover: '' });
   const [usedWordPairIndices, setUsedWordPairIndices] = useState([]);
+  const [clueOrder, setClueOrder] = useState([]); // NEW: clue order
 
   function goTo(screenName) {
     setScreen(screenName);
@@ -81,6 +84,7 @@ function App() {
       clue: '',
       votes: 0,
     })));
+    setClueOrder(shuffle(playerNames)); // NEW: randomize clue order
   }
 
   // Helper: check win condition
@@ -116,7 +120,7 @@ function App() {
               setRound(1);
               setGameOver(false);
               setWinner(null);
-              goTo(SCREENS.ROLE_REVEAL);
+              goTo(SCREENS.SHOW_WORD); // NEW: go to show-word screen
             }}
           >
             <div style={{ marginBottom: 16 }}>
@@ -168,79 +172,111 @@ function App() {
           </form>
         </div>
       )}
-      {screen === SCREENS.ROLE_REVEAL && (
+
+      {/* NEW: Show Word screen */}
+      {screen === SCREENS.SHOW_WORD && (() => {
+        const alivePlayers = players.filter(p => !p.eliminated);
+        if (alivePlayers.length === 0 || currentRevealIndex >= alivePlayers.length) return <p>Loading...</p>;
+        return (
+          <div>
+            <h2>Word Reveal</h2>
+            <p>Pass the device to:<br /><b style={{ fontSize: '2.5rem' }}>{alivePlayers[currentRevealIndex].name}</b></p>
+            <button onClick={() => goTo(SCREENS.REVEAL_WORD)}>Show Word</button>
+          </div>
+        );
+      })()}
+
+      {/* NEW: Reveal Word screen */}
+      {screen === SCREENS.REVEAL_WORD && (() => {
+        const alivePlayers = players.filter(p => !p.eliminated);
+        if (alivePlayers.length === 0 || currentRevealIndex >= alivePlayers.length) return <p>Loading...</p>;
+        const player = alivePlayers[currentRevealIndex];
+        return (
+          <div>
+            <h2>Your Word</h2>
+            <div style={{ margin: '24px 0', border: '1px solid #888', borderRadius: 8, padding: 16, background: '#222' }}>
+              <p style={{ margin: 0 }}>Your word:<br /><b style={{ fontSize: '2.5rem' }}>{player.word || 'No word (Improvise!)'}</b></p>
+            </div>
+            <button onClick={() => {
+              if (currentRevealIndex + 1 < alivePlayers.length) {
+                setCurrentRevealIndex(currentRevealIndex + 1);
+                goTo(SCREENS.SHOW_WORD);
+              } else {
+                setCurrentRevealIndex(0);
+                goTo(SCREENS.CLUE_ORDER); // NEW: go to clue order screen
+              }
+            }}>
+              {currentRevealIndex + 1 < alivePlayers.length ? 'Next Player' : 'Show Clue Order'}
+            </button>
+          </div>
+        );
+      })()}
+
+      {/* NEW: Clue Order screen */}
+      {screen === SCREENS.CLUE_ORDER && (
         <div>
-          <h2>Role Reveal</h2>
-          {(() => {
-            const alivePlayers = players.filter(p => !p.eliminated);
-            return alivePlayers.length > 0 && currentRevealIndex < alivePlayers.length ? (
-              <div>
-                <p><b>Pass the device to: {alivePlayers[currentRevealIndex].name}</b></p>
-                <div style={{ margin: '24px 0', border: '1px solid #888', borderRadius: 8, padding: 16, background: '#222' }}>
-                  <p>Your role: <b>{alivePlayers[currentRevealIndex].role === 'civilian' ? 'Civilian' : alivePlayers[currentRevealIndex].role === 'undercover' ? 'Undercover' : 'Mr. White'}</b></p>
-                  <p>{alivePlayers[currentRevealIndex].role === 'mrwhite' ? 'You have no word. Improvise!' : `Your word: ${alivePlayers[currentRevealIndex].word}`}</p>
-                </div>
-                <button onClick={() => {
-                  if (currentRevealIndex + 1 < alivePlayers.length) {
-                    setCurrentRevealIndex(currentRevealIndex + 1);
-                  } else {
-                    setCurrentClueIndex(0);
-                    setClues([]);
-                    goTo(SCREENS.CLUE);
-                  }
-                }}>
-                  {currentRevealIndex + 1 < alivePlayers.length ? 'Next Player' : 'Start Clue Round'}
-                </button>
-              </div>
-            ) : <p>Loading...</p>;
-          })()}
-        </div>
-      )}
-      {screen === SCREENS.CLUE && (
-        <div>
-          <h2>Elimination (Round {round})</h2>
-          <p>Discuss clues and select a player to eliminate:</p>
-          <ul style={{ textAlign: 'left', maxWidth: 400, margin: '0 auto' }}>
-            {players.filter(p => !p.eliminated).map((p, i) => (
-              <li key={i}>
-                <b>{p.name}</b>
-                <button style={{ marginLeft: 16 }} onClick={() => {
-                  // Eliminate this player
-                  const updatedPlayers = players.map(pl => pl.name === p.name ? { ...pl, eliminated: true } : pl);
-                  // Award points to undercovers for surviving
-                  updatedPlayers.forEach(pl => {
-                    if (pl.role === 'undercover' && !pl.eliminated) pl.points += 1;
-                  });
-                  // Check win condition
-                  const win = checkWinCondition(updatedPlayers);
-                  if (win) {
-                    // Award bonus points to the winning team
-                    let awardedPlayers = updatedPlayers.map(p => {
-                      if (win === 'civilians' && p.role === 'civilian') return { ...p, points: p.points + 3 };
-                      if (win === 'undercovers' && p.role === 'undercover') return { ...p, points: p.points + 3 };
-                      if (win === 'mrwhite' && p.role === 'mrwhite') return { ...p, points: p.points + 5 };
-                      return p;
-                    });
-                    setPlayers(awardedPlayers);
-                    setWinner(win);
-                    setGameOver(true);
-                    goTo(SCREENS.RESULTS);
-                  } else {
-                    setPlayers(updatedPlayers);
-                    setRound(round + 1);
-                    setCurrentRevealIndex(0);
-                    setCurrentClueIndex(0);
-                    setCurrentVoteIndex(0);
-                    setClues([]);
-                    setVotes([]);
-                    goTo(SCREENS.ROLE_REVEAL);
-                  }
-                }}>Eliminate</button>
-              </li>
+          <h2>Clue Order</h2>
+          <p>This is the order in which players will give their clues:</p>
+          <ol style={{ textAlign: 'left', maxWidth: 400, margin: '0 auto' }}>
+            {clueOrder.map((name, i) => (
+              <li key={i}><b>{name}</b></li>
             ))}
-          </ul>
+          </ol>
+          <button onClick={() => goTo(SCREENS.CLUE)}>Start Clue Round</button>
         </div>
       )}
+      {screen === SCREENS.CLUE && (() => {
+        const alivePlayers = players.filter(p => !p.eliminated);
+        console.log('CLUE screen, alivePlayers:', alivePlayers);
+        if (alivePlayers.length === 0) {
+          return <div><h2>No players left!</h2><p>The game cannot continue.</p></div>;
+        }
+        return (
+          <div>
+            <h2>Elimination (Round {round})</h2>
+            <p>Discuss clues and select a player to eliminate:</p>
+            <ul style={{ textAlign: 'left', maxWidth: 400, margin: '0 auto' }}>
+              {alivePlayers.map((p, i) => (
+                <li key={i}>
+                  <b>{p.name}</b>
+                  <button style={{ marginLeft: 16 }} onClick={() => {
+                    // Eliminate this player
+                    const updatedPlayers = players.map(pl => pl.name === p.name ? { ...pl, eliminated: true } : pl);
+                    // Award points to undercovers for surviving
+                    updatedPlayers.forEach(pl => {
+                      if (pl.role === 'undercover' && !pl.eliminated) pl.points += 1;
+                    });
+                    // Check win condition
+                    const win = checkWinCondition(updatedPlayers);
+                    if (win) {
+                      // Award bonus points to the winning team
+                      let awardedPlayers = updatedPlayers.map(p => {
+                        if (win === 'civilians' && p.role === 'civilian') return { ...p, points: p.points + 3 };
+                        if (win === 'undercovers' && p.role === 'undercover') return { ...p, points: p.points + 3 };
+                        if (win === 'mrwhite' && p.role === 'mrwhite') return { ...p, points: p.points + 5 };
+                        return p;
+                      });
+                      setPlayers(awardedPlayers);
+                      setWinner(win);
+                      setGameOver(true);
+                      goTo(SCREENS.RESULTS);
+                    } else {
+                      setPlayers(updatedPlayers);
+                      setRound(round + 1);
+                      setCurrentRevealIndex(0);
+                      setCurrentClueIndex(0);
+                      setCurrentVoteIndex(0);
+                      setClues([]);
+                      setVotes([]);
+                      goTo(SCREENS.SHOW_WORD); // NEW: go to show-word for next round
+                    }
+                  }}>Eliminate</button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })()}
   {/* Voting screen removed as voting is now handled in the elimination screen above */}
       {screen === SCREENS.RESULTS && (
         <div>
