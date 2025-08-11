@@ -17,6 +17,19 @@ const SCREENS = {
 
 
 function App() {
+  const [showRules, setShowRules] = useState(false);
+  // Game rules text based on current logic
+  const rulesText = `
+  How to Play Undercover Party
+
+  1. Setup & Roles – Enter player names, set Civilians, Undercover(s), and optional Mr. White. Each round, a word pair is chosen: Civilians get one word, Undercover(s) the other, Mr. White none. Roles/words are random.
+
+  2. Clues – Players secretly check their word (or blank) and, in random order, give subtle clues. Civilians expose Undercover(s), Undercover(s) blend in, Mr. White guesses the theme.
+
+  3. Elimination & Scoring – After discussion, vote out one player: -1 point if eliminated (scores can go negative), +1 point per round for surviving Undercover(s).
+
+  4. Winning – Civilians win if all Undercover(s)/Mr. White are out; Undercover(s) win if only one Civilian/Mr. White remains; Mr. White wins if only one Civilian/Undercover remains. Winners earn bonus points: Civilians/Undercover(s) +3, Mr. White +5.
+  `;
   const [screen, setScreen] = useState(SCREENS.SETUP);
   const [players, setPlayers] = useState([]); // [{name, role, points, eliminated, word, clue, votes}]
   const [settings, setSettings] = useState({
@@ -65,8 +78,10 @@ function App() {
       availableIndices = wordPairs.map((_, i) => i);
     }
     const idx = availableIndices[Math.floor(Math.random() * availableIndices.length)];
-    const pair = wordPairs[idx];
-    setWords(pair);
+    const pair = wordPairs[idx]; // pair is now [word1, word2]
+    // Randomly decide which word is for civilian and which for undercover
+    const assign = Math.random() < 0.5 ? { civilian: pair[0], undercover: pair[1] } : { civilian: pair[1], undercover: pair[0] };
+    setWords(assign);
     setUsedWordPairIndices(prev => [...prev, idx]);
     // Assign roles
     let roles = [];
@@ -83,7 +98,7 @@ function App() {
         role: roles[idx],
         points: existing ? existing.points : 0,
         eliminated: false,
-        word: roles[idx] === 'civilian' ? pair.civilian : roles[idx] === 'undercover' ? pair.undercover : '',
+        word: roles[idx] === 'civilian' ? assign.civilian : roles[idx] === 'undercover' ? assign.undercover : '',
         clue: '',
         votes: 0,
       };
@@ -107,6 +122,30 @@ function App() {
 
   return (
     <div className="App fun-bg">
+      {/* Info Button */}
+      <button
+        className="fun-btn info-btn"
+  style={{ position: 'absolute', top: 18, right: 18, borderRadius: '50%', width: 44, height: 44, fontSize: '2rem', background: 'none', color: '#ffb300', border: 'none', cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'none' }}
+        onClick={() => setShowRules(true)}
+        aria-label="Show game rules"
+        title="Game Rules"
+      >
+        <span role="img" aria-label="info">ℹ️</span>
+      </button>
+      {/* Rules Modal */}
+      {showRules && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(20,20,30,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#232a3b', color: '#fff', borderRadius: 16, padding: 32, maxWidth: 500, width: '90%', boxShadow: '0 4px 32px #0008', position: 'relative' }}>
+            <button
+              onClick={() => setShowRules(false)}
+              style={{ position: 'absolute', top: 12, right: 16, background: 'none', border: 'none', color: '#ffb300', fontSize: '2rem', cursor: 'pointer' }}
+              aria-label="Close rules"
+            >×</button>
+            <h2 style={{ color: '#ffb300', marginTop: 0 }}>How to Play</h2>
+            <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: '1.05rem', background: 'none', margin: 0 }}>{rulesText}</pre>
+          </div>
+        </div>
+      )}
       <h1 style={{ fontSize: '3rem', marginBottom: 0 }}>🕵️‍♂️ Undercover Party! 🎉</h1>
       <p style={{ marginTop: 0, color: '#ffb300', fontWeight: 'bold', fontSize: '1.2rem' }}>Who can you trust? 👀</p>
       {screen === SCREENS.SETUP && (
@@ -249,8 +288,12 @@ function App() {
                   <li key={i} style={{ marginBottom: 10 }}>
                     <b>{p.name}</b> <span style={{ fontSize: '1.1rem' }}>{roleEmoji}</span>
                     <button className="fun-btn danger" style={{ marginLeft: 16 }} onClick={() => {
-                    // Eliminate this player
-                    const updatedPlayers = players.map(pl => pl.name === p.name ? { ...pl, eliminated: true } : pl);
+                    // Eliminate this player and deduct 1 point
+                    const updatedPlayers = players.map(pl =>
+                      pl.name === p.name
+                        ? { ...pl, eliminated: true, eliminatedThisRound: true }
+                        : pl
+                    );
                     // Award points to undercovers for surviving
                     updatedPlayers.forEach(pl => {
                       if (pl.role === 'undercover' && !pl.eliminated) pl.points += 1;
@@ -259,12 +302,16 @@ function App() {
                     const win = checkWinCondition(updatedPlayers);
                     if (win) {
                       // Award bonus points to the winning team
-                      let awardedPlayers = updatedPlayers.map(p => {
-                        if (win === 'civilians' && p.role === 'civilian') return { ...p, points: p.points + 3 };
-                        if (win === 'undercovers' && p.role === 'undercover') return { ...p, points: p.points + 3 };
-                        if (win === 'mrwhite' && p.role === 'mrwhite') return { ...p, points: p.points + 5 };
-                        return p;
-                      });
+                      let awardedPlayers = updatedPlayers.map(pl => {
+                          let basePoints = pl.points || 0;
+                          // Award bonus
+                          if (win === 'civilians' && pl.role === 'civilian') basePoints += 3;
+                          if (win === 'undercovers' && pl.role === 'undercover') basePoints += 3;
+                          if (win === 'mrwhite' && pl.role === 'mrwhite') basePoints += 5;
+                          // Deduct 1 point if eliminated this round (even if negative)
+                          if (pl.eliminatedThisRound) basePoints -= 1;
+                          return { ...pl, points: basePoints };
+                        });
                       setPlayers(awardedPlayers);
                       setWinner(win);
                       setGameOver(true);
