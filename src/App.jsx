@@ -277,7 +277,8 @@ function App() {
                       setCurrentVoteIndex(0);
                       setClues([]);
                       setVotes([]);
-                      goTo(SCREENS.SHOW_WORD); // NEW: go to show-word for next round
+                      // Skip word reveal after first round
+                      goTo(SCREENS.CLUE_ORDER);
                     }
                   }}>❌ Eliminate</button>
                   </li>
@@ -294,6 +295,10 @@ function App() {
           <h3 style={{ fontSize: '1.7rem', color: winner === 'civilians' ? '#4caf50' : winner === 'undercovers' ? '#f44336' : '#9c27b0' }}>
             Winner: {winner === 'civilians' ? 'Civilians 👨‍🌾' : winner === 'undercovers' ? 'Undercovers 🕵️‍♂️' : 'Mr. White 👻'}
           </h3>
+          <div style={{ margin: '18px 0', padding: '12px 0', background: '#232a3b', borderRadius: 10, border: '2px dashed #ffb300' }}>
+            <h4 style={{ margin: 0 }}>Civilian Word: <span style={{ color: '#4caf50', fontWeight: 'bold' }}>{words.civilian}</span></h4>
+            <h4 style={{ margin: 0 }}>Undercover Word: <span style={{ color: '#f44336', fontWeight: 'bold' }}>{words.undercover}</span></h4>
+          </div>
           <h4>Points:</h4>
           <ul style={{ textAlign: 'left', maxWidth: 400, margin: '0 auto', fontSize: '1.2rem' }}>
             {players.map((p, i) => {
