@@ -99,7 +99,7 @@ function App() {
 
   return (
     <div className="App">
-      <h1>Undercover Game</h1>
+      <h1>Undercover</h1>
       {screen === SCREENS.SETUP && (
         <div>
           <h2>Game Setup</h2>
