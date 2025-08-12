@@ -146,7 +146,7 @@ function App() {
           </div>
         </div>
       )}
-      <h1 className="app-title" style={{ fontSize: '3rem', marginBottom: 0 }}>Undercover Party!</h1>
+      <h1 className="app-title" style={{ fontSize: '3rem', marginBottom: 0 }}>🕵️‍♂️ Undercover Party! 🎉</h1>
       <p style={{ marginTop: 0, color: '#ffb300', fontWeight: 'bold', fontSize: '1.2rem' }}>Who can you trust? 👀</p>
       {screen === SCREENS.SETUP && (
         <div className="card fun-card">
