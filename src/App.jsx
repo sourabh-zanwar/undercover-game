@@ -125,7 +125,7 @@ function App() {
       {/* Info Button */}
       <button
         className="fun-btn info-btn"
-  style={{ position: 'absolute', top: 18, right: 18, borderRadius: '50%', width: 44, height: 44, fontSize: '2rem', background: 'none', color: '#ffb300', border: 'none', cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'none' }}
+        style={{ position: 'absolute', top: 10, right: 10, borderRadius: '50%', width: 40, height: 40, fontSize: '1.8rem', background: 'none', color: '#ffb300', border: 'none', cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'none' }}
         onClick={() => setShowRules(true)}
         aria-label="Show game rules"
         title="Game Rules"
@@ -146,7 +146,7 @@ function App() {
           </div>
         </div>
       )}
-      <h1 style={{ fontSize: '3rem', marginBottom: 0 }}>🕵️‍♂️ Undercover Party! 🎉</h1>
+      <h1 style={{ fontSize: '3rem', marginBottom: 0, marginTop: '60px', paddingRight: '60px' }}>Undercover Party!</h1>
       <p style={{ marginTop: 0, color: '#ffb300', fontWeight: 'bold', fontSize: '1.2rem' }}>Who can you trust? 👀</p>
       {screen === SCREENS.SETUP && (
         <div className="card fun-card">

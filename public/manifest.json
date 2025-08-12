@@ -1,0 +1,16 @@
+{
+  "name": "Undercover Party Game",
+  "short_name": "Undercover",
+  "description": "A fun party game to play with friends",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#181c2f",
+  "theme_color": "#181c2f",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
