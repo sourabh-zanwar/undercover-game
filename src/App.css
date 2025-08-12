@@ -96,3 +96,34 @@ body {
 .read-the-docs {
   color: #888;
 }
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .app-title {
+    margin-top: 60px !important;
+    font-size: 2.2rem !important;
+  }
+  
+  .info-btn {
+    top: 12px !important;
+    right: 12px !important;
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 1.8rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-title {
+    margin-top: 70px !important;
+    font-size: 1.8rem !important;
+  }
+  
+  .info-btn {
+    top: 10px !important;
+    right: 10px !important;
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 1.6rem !important;
+  }
+}
